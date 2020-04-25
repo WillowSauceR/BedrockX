@@ -75,13 +75,13 @@ static inline void logError(const char* e, const char* T) {
 #include<debug/WatchDog.h>
 template <class T>
 class EventCaller {
-	LIGHTBASE_API static std::list<CallBackStorage<T>> listener_v2;
+	LIGHTBASE_API static std::list<CallBackStorage<T>> listener_v3;
 public:
 	template<typename... P>
 	static auto _call(P&&... args) {
 		T ev(std::forward<P>(args)...);
 		try {
-			for (auto& i : EventCaller<T>::listener_v2) {
+			for (auto& i : EventCaller<T>::listener_v3) {
 				if (!i)
 					continue;
 				WATCH_ME(string("call event ") + typeid(T).name() + "\n at " + i.note);
@@ -104,24 +104,24 @@ public:
 			return;
 	}
 	static void _removeall() {
-		listener_v2.clear();
+		listener_v3.clear();
 	}
 	template<typename... TP>
 	static LInfo<T> _reg(CBStorage<T>&& cb, EvPrio prio,TP&&... args) {
 		LInfo<T> lf;
 		lf.id = newListenerID();
 		if (prio == EvPrio::HIGH) {
-			listener_v2.emplace_front(std::move(cb), lf, std::forward<TP>(args)...);
+			listener_v3.emplace_front(std::move(cb), lf, std::forward<TP>(args)...);
 			return lf;
 		}
 		if (prio == EvPrio::LOW) {
-			listener_v2.emplace_back(std::move(cb), lf, std::forward<TP>(args)...);
+			listener_v3.emplace_back(std::move(cb), lf, std::forward<TP>(args)...);
 			return lf;
 		}
-		for (auto it = listener_v2.begin(); it != listener_v2.end(); ++it) {
+		for (auto it = listener_v3.begin(); it != listener_v3.end(); ++it) {
 			if (!(*it)) {
 				//flag
-				listener_v2.emplace(it, std::move(cb), lf, std::forward<TP>(args)...);
+				listener_v3.emplace(it, std::move(cb), lf, std::forward<TP>(args)...);
 				return lf;
 			}
 		}
@@ -129,10 +129,10 @@ public:
 		return { -1 };
 	}
 	static auto _remove(LInfo<T> lf) {
-		return listener_v2.remove_if([lf](auto& elem) -> bool { return elem.id.id == lf.id; });
+		return listener_v3.remove_if([lf](auto& elem) -> bool { return elem.id.id == lf.id; });
 	}
 	static void _cleanup() {
-		listener_v2.remove_if([](auto& elem) -> bool { return !elem; });
+		listener_v3.remove_if([](auto& elem) -> bool { return !elem; });
 	}
 };
 
